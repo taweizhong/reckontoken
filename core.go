@@ -25,6 +25,7 @@ func bytePairEncode(ranks map[string]int, piece string) []int {
 	return rankList
 }
 
+// 将字符串使用BPE方法分割
 func bytePairSplit(ranks map[string]int, piece string) []string {
 	ir := bytePairMerge(ranks, piece)
 	tokens := make([]string, 0)
@@ -88,20 +89,4 @@ func bytePairMerge(ranks map[string]int, piece string) IRList {
 		}
 	}
 	return parts
-}
-
-func (ir *IRList) getRank() []int {
-	ranks := make([]int, len(*ir))
-	for i, r := range *ir {
-		ranks[i] = r.rank
-	}
-	return ranks
-}
-
-func (ir *IRList) getIndex() []int {
-	index := make([]int, len(*ir))
-	for i, r := range *ir {
-		index[i] = r.index
-	}
-	return index
 }
