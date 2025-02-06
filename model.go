@@ -3,6 +3,7 @@ package reckontoken
 import (
 	"fmt"
 	"log"
+	"strings"
 )
 
 // 编码器
@@ -68,7 +69,17 @@ func o200kBase() factory {
 			log.Fatalln(fmt.Errorf("o200kBase load error: %v", err))
 		}
 		special_tokens := map[string]int{ENDOFTEXT: 199999, ENDOFPROMPT: 200018}
-		patStr := `[^\r\n\pL\pN]?\pL+|\pN{1,3}| ?[^\s\pL\pN]+[\r\n]*|\s+$|\s*[\r\n]|\s+`
+		patterns := []string{
+			`[^\r\n\pL\pN]?[\p{Lu}\p{Lt}\p{Lm}\p{Lo}\p{M}]*[\p{Ll}\p{Lm}\p{Lo}\p{M}]+(?i:'s|'t|'re|'ve|'m|'ll|'d)?`,
+			`[^\r\n\pL\pN]?[\p{Lu}\p{Lt}\p{Lm}\p{Lo}\p{M}]+[\p{Ll}\p{Lm}\p{Lo}\p{M}]*((?i:'s|'t|'re|'ve|'m|'ll|'d)?)`,
+			`\p{N}{1,3}`,
+			` ?[^\s\pL\pN]+[\r\n/]*`,
+			`\s*[\r\n]+`,
+			`\s+(?!\S)`,
+			`\s+`,
+		}
+		// 使用 | 连接所有模式
+		patStr := strings.Join(patterns, "|")
 		return &Base{
 			name:           "o200k_base",
 			mergeAbleRanks: mergeable_ranks,
