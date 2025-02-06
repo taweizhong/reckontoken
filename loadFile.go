@@ -20,13 +20,10 @@ func LoadTokens(url string) (map[string]int, error) {
 			if err != nil {
 				log.Fatal(err)
 			}
-			// 将解码后的字节数组转换为字符串
 			token := string(decoded)
 			value := strings.TrimSpace(parts[1])
-			// 可以转换 value 为 int
 			tokens[token] = atoi(value)
 		}
-
 	}
 	if err := scanner.Err(); err != nil {
 		return nil, err

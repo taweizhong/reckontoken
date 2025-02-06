@@ -1,61 +1,107 @@
 package reckontoken
 
 import (
-	"log"
-	"regexp"
+	"math"
 )
 
-type BPE struct {
-	encoder                map[string]int
-	special_tokens_encoder map[string]int
-	decoder                map[int]string
-	special_tokens_decoder map[int]string
-	regex_tls              string
-	special_regex_tls      string
-	sorted_token_bytes     string
+var rankMax = math.MaxInt
+
+type IRList []indexRank
+
+type indexRank struct {
+	index int
+	rank  int
 }
 
-func NewBPE() *BPE {
-	path := TokenFilePath["o200k_base"]
-	tokens, _ := LoadTokens(path)
-	return &BPE{
-		encoder: tokens,
+// 分割成每一个token的编码
+func bytePairEncode(ranks map[string]int, piece string) []int {
+	ir := bytePairMerge(ranks, piece)
+	rankList := make([]int, 0)
+	for i := 0; i < len(ir)-1; i++ {
+		token := piece[ir[i].index:ir[i+1].index]
+		rank := ranks[token]
+		rankList = append(rankList, rank)
 	}
+	return rankList
 }
 
-func (b *BPE) getRegex() string {
-	return b.regex_tls
-}
-func (b *BPE) getSpecialTokens() string {
-	return b.special_regex_tls
-}
-func (b *BPE) decodeNative(ir []indexRank) string {
-	result := ""
-	for _, token := range ir {
-		result += b.decoder[token.rank]
+func bytePairSplit(ranks map[string]int, piece string) []string {
+	ir := bytePairMerge(ranks, piece)
+	tokens := make([]string, 0)
+	for i := 0; i < len(ir)-1; i++ {
+		token := piece[ir[i].index:ir[i+1].index]
+		tokens = append(tokens, token)
 	}
-	return result
+	return tokens
 }
-func (b *BPE) encodeOrdinaryNative(text string) []int {
-	regex := b.getRegex()
-	ret := make([]int, 0)
-	re, err := regexp.Compile(regex)
-	if err != nil {
-		log.Fatal(err)
+
+// 字节对合并
+func bytePairMerge(ranks map[string]int, piece string) IRList {
+	parts := make([]indexRank, 0, len(piece)+1)
+
+	minRank := indexRank{
+		index: rankMax,
+		rank:  rankMax,
 	}
-	result := re.FindAllString(text, -1)
-	for _, mat := range result {
-		if piece, ok := b.encoder[mat]; ok {
-			ret = append(ret, piece)
-		} else {
-			irList := bytePairMerge(b.encoder, mat)
-			ranks := irList.getRank()
-			ret = append(ret, ranks...)
+	for i := 0; i < len(piece)-1; i++ {
+		rank := rankMax
+		if r, exist := ranks[piece[i:i+2]]; exist {
+			rank = r
+			if rank < minRank.rank {
+				minRank = indexRank{index: i, rank: rank}
+			}
+		}
+		parts = append(parts, indexRank{i, rank})
+	}
+	// 确保最后一个字符被处理
+	parts = append(parts, indexRank{len(piece) - 1, rankMax})
+	parts = append(parts, indexRank{len(piece), rankMax})
+
+	getRank := func(parts []indexRank, index int) int {
+		rank := rankMax
+		if index+3 < len(parts) {
+			if r, exist := ranks[piece[parts[index].index:parts[index+3].index]]; exist {
+				rank = r
+				return rank
+			}
+		}
+		return rank
+	}
+	for minRank.rank < rankMax {
+		index := minRank.index
+		if index > 0 {
+			parts[index-1].rank = getRank(parts, index-1)
+		}
+		parts[index].rank = getRank(parts, index)
+		l := parts[:index+1]
+		r := parts[index+2:]
+		parts = append(l, r...)
+		minRank = indexRank{
+			index: rankMax,
+			rank:  rankMax,
+		}
+		for i := 0; i < len(parts)-1; i++ {
+			if parts[i].rank < minRank.rank {
+				minRank.rank = parts[i].rank
+				minRank.index = i
+			}
 		}
 	}
-	return ret
+	return parts
 }
-func (b *BPE) Encode(text string) []string {
-	irList := BytePairEncode(b.encoder, text)
-	return irList
+
+func (ir *IRList) getRank() []int {
+	ranks := make([]int, len(*ir))
+	for i, r := range *ir {
+		ranks[i] = r.rank
+	}
+	return ranks
+}
+
+func (ir *IRList) getIndex() []int {
+	index := make([]int, len(*ir))
+	for i, r := range *ir {
+		index[i] = r.index
+	}
+	return index
 }
