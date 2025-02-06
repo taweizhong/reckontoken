@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+// 读取词典
 func LoadTokens(url string) (map[string]int, error) {
 	response, _ := http.Get(url)
 	tokens := make(map[string]int)
@@ -31,6 +32,7 @@ func LoadTokens(url string) (map[string]int, error) {
 	return tokens, nil
 }
 
+// 转换
 func atoi(str string) int {
 	var result int
 	for i := 0; i < len(str); i++ {

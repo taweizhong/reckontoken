@@ -5,6 +5,7 @@ import (
 	"log"
 )
 
+// 编码器
 var ENCODINGCONSTRUCTORS = map[string]factory{
 	"cl100k_base": cl100kBase(),
 	"o200k_base":  o200kBase(),
@@ -18,13 +19,16 @@ var (
 	ENDOFPROMPT = "<|endofprompt|>"
 )
 
+// 词典下载地址
 var TokenFilePath = map[string]string{
 	"o200k_base":  "https://gitee.com/taweizhong/encodings/raw/master/o200k_base.tiktoken",
 	"cl100k_base": "https://gitee.com/taweizhong/encodings/raw/master/cl100k_base.tiktoken",
 }
 
+// 工厂函数
 type factory func() *Base
 
+// 基础数据
 type Base struct {
 	name           string
 	mergeAbleRanks map[string]int
@@ -32,6 +36,7 @@ type Base struct {
 	specialTokens  map[string]int
 }
 
+// cl100kBase
 func cl100kBase() factory {
 	return func() *Base {
 		mergeable_ranks, err := LoadTokens(TokenFilePath["cl100k_base"])
@@ -54,6 +59,8 @@ func cl100kBase() factory {
 	}
 
 }
+
+// o200kBase
 func o200kBase() factory {
 	return func() *Base {
 		mergeable_ranks, err := LoadTokens(TokenFilePath["o200k_base"])

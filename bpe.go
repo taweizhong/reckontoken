@@ -8,6 +8,7 @@ import (
 // option函数
 type Option func(bpe *BPE)
 
+// BPE结构体
 type BPE struct {
 	encoder                map[string]int // 编码词典
 	special_tokens_encoder map[string]int // 特殊token的编码
@@ -84,6 +85,8 @@ func (b *BPE) DecodeNative(ir []indexRank) string {
 	}
 	return result
 }
+
+// 分词
 func (b *BPE) Split(text string) []string {
 	regex := b.getRegex()
 	ret := make([]string, 0)

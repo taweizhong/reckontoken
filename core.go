@@ -8,6 +8,7 @@ var rankMax = math.MaxInt
 
 type IRList []indexRank
 
+// 核心结构体，记录索引位置和rank
 type indexRank struct {
 	index int
 	rank  int
