@@ -24,6 +24,6 @@ func main() {
 reckontoken可以直接安装使用：
 
 ```
-go get github.com/taweizhong/reckontoken
+go get github.com/taweizhong/reckontoken 
 ```
 
