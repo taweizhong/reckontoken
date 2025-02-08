@@ -3,11 +3,10 @@ package reckontoken
 import (
 	"fmt"
 	"log"
-	"strings"
 )
 
 // 编码器
-var ENCODINGCONSTRUCTORS = map[string]factory{
+var ENCODINGCONSTRUCTORS = map[string]Factory{
 	"cl100k_base": cl100kBase(),
 	"o200k_base":  o200kBase(),
 }
@@ -22,12 +21,12 @@ var (
 
 // 词典下载地址
 var TokenFilePath = map[string]string{
-	"o200k_base":  "https://gitee.com/taweizhong/encodings/raw/master/o200k_base.tiktoken",
-	"cl100k_base": "https://gitee.com/taweizhong/encodings/raw/master/cl100k_base.tiktoken",
+	"o200k_base":  "/dicts/o200k_base.tiktoken",
+	"cl100k_base": "/dicts/cl100k_base.tiktoken",
 }
 
 // 工厂函数
-type factory func() *Base
+type Factory func() *Base
 
 // 基础数据
 type Base struct {
@@ -38,9 +37,9 @@ type Base struct {
 }
 
 // cl100kBase
-func cl100kBase() factory {
+func cl100kBase() Factory {
 	return func() *Base {
-		mergeable_ranks, err := LoadTokens(TokenFilePath["cl100k_base"])
+		mergeable_ranks, err := LoadLocalTokens(TokenFilePath["cl100k_base"])
 		if err != nil {
 			log.Fatalln(fmt.Errorf("cl100k_base load error: %v", err))
 		}
@@ -62,24 +61,14 @@ func cl100kBase() factory {
 }
 
 // o200kBase
-func o200kBase() factory {
+func o200kBase() Factory {
 	return func() *Base {
-		mergeable_ranks, err := LoadTokens(TokenFilePath["o200k_base"])
+		mergeable_ranks, err := LoadLocalTokens(TokenFilePath["o200k_base"])
 		if err != nil {
 			log.Fatalln(fmt.Errorf("o200kBase load error: %v", err))
 		}
 		special_tokens := map[string]int{ENDOFTEXT: 199999, ENDOFPROMPT: 200018}
-		patterns := []string{
-			`[^\r\n\pL\pN]?[\p{Lu}\p{Lt}\p{Lm}\p{Lo}\p{M}]*[\p{Ll}\p{Lm}\p{Lo}\p{M}]+(?i:'s|'t|'re|'ve|'m|'ll|'d)?`,
-			`[^\r\n\pL\pN]?[\p{Lu}\p{Lt}\p{Lm}\p{Lo}\p{M}]+[\p{Ll}\p{Lm}\p{Lo}\p{M}]*((?i:'s|'t|'re|'ve|'m|'ll|'d)?)`,
-			`\p{N}{1,3}`,
-			` ?[^\s\pL\pN]+[\r\n/]*`,
-			`\s*[\r\n]+`,
-			`\s+(?!\S)`,
-			`\s+`,
-		}
-		// 使用 | 连接所有模式
-		patStr := strings.Join(patterns, "|")
+		patStr := `(?i)'([sdmt]|ll|ve|re)|[^\r\n\p{L}\p{N}]?\p{L}+|\p{N}{1,3}| ?[^\s\p{L}\p{N}]+[\r\n]*|\s+$|\s*[\r\n]|\s+|\s`
 		return &Base{
 			name:           "o200k_base",
 			mergeAbleRanks: mergeable_ranks,

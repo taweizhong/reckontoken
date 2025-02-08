@@ -1,9 +1,38 @@
 package reckontoken
 
+import (
+	"fmt"
+	"log"
+)
+
 var ENCODINGS map[string]*BPE
 
 func init() {
 	RegistryConstructors()
+}
+
+func NewBase(url string, patStr string, special_tokens map[string]int) *BPE {
+	mergeable_ranks, err := LoadTokens(url)
+	if err != nil {
+		log.Fatalln(fmt.Errorf("file error: %v", err))
+	}
+	if mergeable_ranks == nil || len(mergeable_ranks) == 0 {
+		log.Fatalln(fmt.Errorf("format error: mergeable_ranks error"))
+	}
+	if patStr != "" {
+		log.Fatalln(fmt.Errorf("patStr error"))
+	}
+	if special_tokens != nil {
+		log.Fatalln(fmt.Errorf("special_tokens error"))
+	}
+	bpe := NewBPE(
+		WithEncoder(mergeable_ranks),
+		WithDecoder(mergeable_ranks),
+		WithRegex(patStr),
+		WithSpecialRegex(special_tokens),
+		WithSpecialTokensEncoder(special_tokens),
+	)
+	return bpe
 }
 
 // 注册工厂函数

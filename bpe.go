@@ -1,6 +1,8 @@
 package reckontoken
 
 import (
+	"fmt"
+	"log"
 	"regexp"
 	"strings"
 )
@@ -47,7 +49,7 @@ func WithDecoder(encoder map[string]int) Option {
 func WithRegex(regex_tls string) Option {
 	regex, err := regexp.Compile(regex_tls)
 	if err != nil {
-		panic(err)
+		log.Fatalln(fmt.Errorf("regex error: %v", err))
 	}
 	return func(bpe *BPE) {
 		bpe.regex = regex
@@ -62,7 +64,10 @@ func WithSpecialRegex(specialTokens map[string]int) Option {
 		i++
 	}
 	pattern := strings.Join(escapedTokens, "|") // 拼接成正则
-	regex := regexp.MustCompile(pattern)
+	regex, err := regexp.Compile(pattern)
+	if err != nil {
+		log.Fatalln(fmt.Errorf("regex error: %v", err))
+	}
 	return func(bpe *BPE) {
 		bpe.special_regex = regex
 	}
